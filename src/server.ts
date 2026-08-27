@@ -6,6 +6,7 @@ import { renderErrorPage } from "./lib/error-page";
 import { handleGetRepos } from "./lib/github-api";
 import { handleGetDashboard } from "./lib/dashboard-api";
 import { handleGetRepoInsights } from "./lib/repo-insights";
+import { handleGetRepoDetail } from "./lib/repo-detail-api";
 import {
   handleGitHubLogin,
   handleGitHubCallback,
@@ -59,6 +60,9 @@ export default {
     try {
       const url = new URL(request.url);
 
+      if (url.pathname === "/api/repos/detail") {
+        return await handleGetRepoDetail(request);
+      }
       if (url.pathname === "/api/repos/insights") {
         return await handleGetRepoInsights(request);
       }

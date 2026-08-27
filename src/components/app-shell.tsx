@@ -33,7 +33,8 @@ function useTheme() {
   const [dark, setDark] = useState(false);
   useEffect(() => {
     const stored = typeof window !== "undefined" ? localStorage.getItem("theme") : null;
-    const prefers = typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const prefers =
+      typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches;
     const isDark = stored ? stored === "dark" : prefers;
     setDark(isDark);
     document.documentElement.classList.toggle("dark", isDark);
@@ -113,13 +114,17 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="font-semibold text-sm text-brand-gradient">GitInsight AI</div>
             <div className="text-[11px] text-muted-foreground truncate">Project Intelligence</div>
           </div>
-          <button className="ml-auto lg:hidden text-muted-foreground" onClick={() => setOpen(false)}>
+          <button
+            className="ml-auto lg:hidden text-muted-foreground"
+            onClick={() => setOpen(false)}
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
         <nav className="p-3 space-y-1">
           {nav.map((item) => {
-            const active = path === item.to || (item.to !== "/dashboard" && path.startsWith(item.to));
+            const active =
+              path === item.to || (item.to !== "/dashboard" && path.startsWith(item.to));
             const Icon = item.icon;
             return (
               <Link
@@ -132,7 +137,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                     : "text-sidebar-foreground hover:bg-sidebar-accent"
                 }`}
               >
-                <Icon className={`h-4 w-4 ${active ? "" : "text-muted-foreground group-hover:text-foreground"}`} />
+                <Icon
+                  className={`h-4 w-4 ${active ? "" : "text-muted-foreground group-hover:text-foreground"}`}
+                />
                 {item.label}
               </Link>
             );
@@ -149,7 +156,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       {open && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-30 lg:hidden" onClick={() => setOpen(false)} />
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-30 lg:hidden"
+          onClick={() => setOpen(false)}
+        />
       )}
 
       {/* Main */}
@@ -215,7 +225,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         <nav className="fixed bottom-0 inset-x-0 lg:hidden bg-card/95 backdrop-blur-xl border-t border-border z-30">
           <div className="grid grid-cols-5">
             {nav.slice(0, 5).map((item) => {
-              const active = path === item.to || (item.to !== "/dashboard" && path.startsWith(item.to));
+              const active =
+                path === item.to || (item.to !== "/dashboard" && path.startsWith(item.to));
               const Icon = item.icon;
               return (
                 <Link
@@ -237,7 +248,15 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 }
 
-export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: string; actions?: ReactNode }) {
+export function PageHeader({
+  title,
+  subtitle,
+  actions,
+}: {
+  title: string;
+  subtitle?: string;
+  actions?: ReactNode;
+}) {
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">

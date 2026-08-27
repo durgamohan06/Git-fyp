@@ -43,9 +43,10 @@ export function handleGitHubLogin(request: Request): Response {
     return new Response(
       JSON.stringify({
         error: "Configuration Error",
-        message: "GITHUB_CLIENT_ID is not configured in .env. Please register an OAuth App in GitHub.",
+        message:
+          "GITHUB_CLIENT_ID is not configured in .env. Please register an OAuth App in GitHub.",
       }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { "Content-Type": "application/json" } },
     );
   }
 
@@ -75,7 +76,7 @@ export async function handleGitHubCallback(request: Request): Promise<Response> 
     const errorMsg = errorDescription || error || "No authorization code received from GitHub.";
     return new Response(
       `<!DOCTYPE html><html><head><title>Authentication Failed</title><style>body{font-family:sans-serif;padding:40px;background:#0d1117;color:#fff;text-align:center}a{color:#58a6ff;text-decoration:none;font-weight:bold}</style></head><body><h2>Authentication Failed</h2><p>${errorMsg}</p><p><a href="/">Return to Login</a></p></body></html>`,
-      { status: 400, headers: { "Content-Type": "text/html" } }
+      { status: 400, headers: { "Content-Type": "text/html" } },
     );
   }
 
@@ -85,7 +86,7 @@ export async function handleGitHubCallback(request: Request): Promise<Response> 
   if (!clientId || !clientSecret) {
     return new Response(
       `<!DOCTYPE html><html><head><title>Configuration Missing</title><style>body{font-family:sans-serif;padding:40px;background:#0d1117;color:#fff;text-align:center}a{color:#58a6ff;text-decoration:none;font-weight:bold}</style></head><body><h2>OAuth Credentials Missing</h2><p>GITHUB_CLIENT_ID or GITHUB_CLIENT_SECRET is missing in .env.</p><p><a href="/">Return to Login</a></p></body></html>`,
-      { status: 500, headers: { "Content-Type": "text/html" } }
+      { status: 500, headers: { "Content-Type": "text/html" } },
     );
   }
 
@@ -108,7 +109,9 @@ export async function handleGitHubCallback(request: Request): Promise<Response> 
     const tokenData = await tokenRes.json();
 
     if (!tokenRes.ok || tokenData.error) {
-      throw new Error(tokenData.error_description || tokenData.error || "Failed to exchange OAuth code.");
+      throw new Error(
+        tokenData.error_description || tokenData.error || "Failed to exchange OAuth code.",
+      );
     }
 
     const accessToken = tokenData.access_token;
@@ -175,7 +178,7 @@ export async function handleGitHubCallback(request: Request): Promise<Response> 
   } catch (err: any) {
     return new Response(
       `<!DOCTYPE html><html><head><title>OAuth Error</title><style>body{font-family:sans-serif;padding:40px;background:#0d1117;color:#fff;text-align:center}a{color:#58a6ff;text-decoration:none;font-weight:bold}</style></head><body><h2>Login Error</h2><p>${err.message}</p><p><a href="/">Return to Login</a></p></body></html>`,
-      { status: 500, headers: { "Content-Type": "text/html" } }
+      { status: 500, headers: { "Content-Type": "text/html" } },
     );
   }
 }
@@ -189,7 +192,7 @@ export async function handleGetUser(request: Request): Promise<Response> {
   if (!token) {
     return new Response(
       JSON.stringify({ error: "Unauthorized", message: "User is not authenticated." }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
+      { status: 401, headers: { "Content-Type": "application/json" } },
     );
   }
 
@@ -229,10 +232,10 @@ export async function handleGetUser(request: Request): Promise<Response> {
       headers: { "Content-Type": "application/json" },
     });
   } catch (err: any) {
-    return new Response(
-      JSON.stringify({ error: "Server Error", message: err.message }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Server Error", message: err.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }
 
@@ -249,7 +252,7 @@ export function handleLogout(): Response {
         "Content-Type": "text/html",
         "Set-Cookie": cookie,
       },
-    }
+    },
   );
 }
 
@@ -264,7 +267,7 @@ export async function nodeAuthRouter(req: any, res: any, next: any) {
 
   const reqHeaders = new Headers();
   for (const [key, value] of Object.entries(req.headers)) {
-    if (value) reqHeaders.set(key, Array.isArray(value) ? value.join(", ") : value as string);
+    if (value) reqHeaders.set(key, Array.isArray(value) ? value.join(", ") : (value as string));
   }
 
   const webRequest = new Request(fullUrl, {

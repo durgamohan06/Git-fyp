@@ -17,7 +17,7 @@ import {
   FolderGit2,
 } from "lucide-react";
 
-export const Route = createFileRoute("/repositories")({
+export const Route = createFileRoute("/repositories/")({
   head: () => ({
     meta: [
       { title: "Repositories · GitInsight AI" },
@@ -116,7 +116,11 @@ function Repositories() {
   };
 
   const currentTabList =
-    activeTab === "owned" ? ownedRepos : activeTab === "collaborated" ? collaboratedRepos : allRepos;
+    activeTab === "owned"
+      ? ownedRepos
+      : activeTab === "collaborated"
+        ? collaboratedRepos
+        : allRepos;
 
   // Extract unique languages for filter dropdown
   const languages: string[] = [
@@ -162,7 +166,9 @@ function Repositories() {
           <form onSubmit={handleSaveToken} className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="font-semibold text-sm">GitHub Personal Access Token</span>
-              <span className="text-xs text-muted-foreground">Saved securely in browser session</span>
+              <span className="text-xs text-muted-foreground">
+                Saved securely in browser session
+              </span>
             </div>
             <div className="flex gap-2">
               <input
@@ -187,7 +193,8 @@ function Repositories() {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              You can enter a specific GitHub Personal Access Token or click <strong>Reset to OAuth</strong> to use your active OAuth session.
+              You can enter a specific GitHub Personal Access Token or click{" "}
+              <strong>Reset to OAuth</strong> to use your active OAuth session.
             </p>
           </form>
         </Card>
@@ -208,7 +215,9 @@ function Repositories() {
           >
             <FolderGit2 className="h-3.5 w-3.5" />
             All Repositories
-            <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeTab === "all" ? "bg-black/20 text-white" : "bg-muted text-muted-foreground"}`}>
+            <span
+              className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeTab === "all" ? "bg-black/20 text-white" : "bg-muted text-muted-foreground"}`}
+            >
               {allRepos.length}
             </span>
           </button>
@@ -224,7 +233,9 @@ function Repositories() {
           >
             <UserCheck className="h-3.5 w-3.5" />
             My Owned Repos
-            <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeTab === "owned" ? "bg-black/20 text-white" : "bg-muted text-muted-foreground"}`}>
+            <span
+              className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeTab === "owned" ? "bg-black/20 text-white" : "bg-muted text-muted-foreground"}`}
+            >
               {ownedRepos.length}
             </span>
           </button>
@@ -240,7 +251,9 @@ function Repositories() {
           >
             <Users className="h-3.5 w-3.5" />
             Collaborated Repos
-            <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeTab === "collaborated" ? "bg-black/20 text-white" : "bg-muted text-muted-foreground"}`}>
+            <span
+              className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeTab === "collaborated" ? "bg-black/20 text-white" : "bg-muted text-muted-foreground"}`}
+            >
               {collaboratedRepos.length}
             </span>
           </button>
@@ -277,7 +290,11 @@ function Repositories() {
       {loading && (
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i} className="p-5 h-56 animate-pulse flex flex-col justify-between" lift={false}>
+            <Card
+              key={i}
+              className="p-5 h-56 animate-pulse flex flex-col justify-between"
+              lift={false}
+            >
               <div>
                 <div className="h-4 w-28 bg-muted rounded mb-2" />
                 <div className="h-6 w-48 bg-muted rounded mb-3" />
@@ -332,7 +349,10 @@ function Repositories() {
       {!loading && !error && filteredRepos.length > 0 && (
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {filteredRepos.map((r) => (
-            <Card key={r.id} className="p-5 h-full flex flex-col justify-between hover:border-brand/50 transition">
+            <Card
+              key={r.id}
+              className="p-5 h-full flex flex-col justify-between hover:border-brand/50 transition"
+            >
               <div>
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="flex items-center gap-2 min-w-0">
@@ -365,7 +385,9 @@ function Repositories() {
                         Collaborator
                       </Badge>
                     )}
-                    <Badge tone={r.private ? "warning" : "success"}>{r.private ? "Private" : "Public"}</Badge>
+                    <Badge tone={r.private ? "warning" : "success"}>
+                      {r.private ? "Private" : "Public"}
+                    </Badge>
                   </div>
                 </div>
 

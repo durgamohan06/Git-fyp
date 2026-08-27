@@ -50,8 +50,12 @@ function LoginPage() {
             <h1 className="mt-6 text-2xl md:text-3xl font-semibold tracking-tight">
               <span className="text-brand-gradient">GitInsight AI</span>
             </h1>
-            <p className="mt-3 text-base font-medium">AI-Powered GitHub Project Intelligence Dashboard</p>
-            <p className="mt-2 text-sm text-muted-foreground">Track software projects intelligently with AI.</p>
+            <p className="mt-3 text-base font-medium">
+              AI-Powered GitHub Project Intelligence Dashboard
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Track software projects intelligently with AI.
+            </p>
 
             <button
               onClick={handleGitHubLogin}

@@ -43,13 +43,14 @@
 
 ## 🌟 Overview
 
-**GitInsight AI** addresses the common software coordination bottleneck where engineering managers and teams spend substantial time manually tracking GitHub commits, PR reviews, and standup blockers. 
+**GitInsight AI** addresses the common software coordination bottleneck where engineering managers and teams spend substantial time manually tracking GitHub commits, PR reviews, and standup blockers.
 
 The platform connects to the GitHub REST API and OAuth 2.0 to provide:
+
 - **Instant Project Visibility**: Real-time project health scoring, commit velocity, and module completion tracking.
 - **Collaborator & Owned Repository Separation**: Distinguishes between repositories created by the user and projects where the user is an invited collaborator.
 - **AI Blocker Detection**: Flagging stale PRs, open issue backlogs, and delayed releases before they block progress.
-- **Voice Assistant**: An interactive voice/chat interface allowing leaders to ask natural language questions like *"What was completed today?"* or *"Which PRs are pending?"*.
+- **Voice Assistant**: An interactive voice/chat interface allowing leaders to ask natural language questions like _"What was completed today?"_ or _"Which PRs are pending?"_.
 - **Developer Analytics**: Contributor velocity scorecards, skill radar charts, and work distribution graphs.
 
 ---
@@ -68,8 +69,9 @@ The platform connects to the GitHub REST API and OAuth 2.0 to provide:
 ## 📱 Frontend Pages & UI Components
 
 ### 1. Landing & Gateway Page (`/`)
-* **File:** `src/routes/index.tsx`
-* **Features:**
+
+- **File:** `src/routes/index.tsx`
+- **Features:**
   - Modern hero section with animated ambient gradient blobs.
   - **"Continue with GitHub"** button triggering the full OAuth 2.0 authorization flow.
   - Direct **"Demo Dashboard"** link for instant evaluation.
@@ -78,8 +80,9 @@ The platform connects to the GitHub REST API and OAuth 2.0 to provide:
 ---
 
 ### 2. Executive Dashboard (`/dashboard`)
-* **File:** `src/routes/dashboard.tsx`
-* **Features:**
+
+- **File:** `src/routes/dashboard.tsx`
+- **Features:**
   - **Personalized Header**: Dynamic greeting with the authenticated user's name (`Good Morning, @User 👋`).
   - **Project Health Score**: Animated circular progress ring showing overall multi-repository health (computed from open issues, stale PRs, and recent commit velocity).
   - **Metric Stat Cards**: 6 cards with sparklines displaying Repositories, Commits (30d), Open Issues, Open PRs, Active Contributors, and AI Blockers.
@@ -90,8 +93,9 @@ The platform connects to the GitHub REST API and OAuth 2.0 to provide:
 ---
 
 ### 3. Repositories Directory (`/repositories`)
-* **File:** `src/routes/repositories.tsx`
-* **Features:**
+
+- **File:** `src/routes/repositories.tsx`
+- **Features:**
   - **3-Tab Affiliation Segmentation**:
     - 📁 **All Repositories**: Complete list of connected repositories.
     - 👤 **My Owned Repos**: Repositories created directly by the user.
@@ -104,8 +108,9 @@ The platform connects to the GitHub REST API and OAuth 2.0 to provide:
 ---
 
 ### 4. Repository Deep-Dive (`/repositories/:id`)
-* **File:** `src/routes/repositories.$id.tsx`
-* **Features:**
+
+- **File:** `src/routes/repositories.$id.tsx`
+- **Features:**
   - **8-Tab Navigation Workspace**:
     1. **Overview**: High-level repository metrics and quick actions (Star, Fork, View on GitHub).
     2. **Commits**: Recent commit activity timeline.
@@ -119,34 +124,37 @@ The platform connects to the GitHub REST API and OAuth 2.0 to provide:
 ---
 
 ### 5. AI Insights Engine (`/ai-insights`)
-* **File:** `src/routes/ai-insights.tsx`
-* **Features:**
+
+- **File:** `src/routes/ai-insights.tsx`
+- **Features:**
   - **Executive Brief**: AI-generated cross-repository summary highlighting high-priority deliverables.
   - **Categorized Intelligence Cards**:
-    - *Daily, Weekly, and Sprint Velocity Summaries*.
-    - *Risk Analysis* & *Release Shipping Predictions* (with confidence scores).
-    - *Completed vs. Pending Task Breakdown*.
-    - *Recommended Actions* (e.g. review reassignments, backfill splitting).
+    - _Daily, Weekly, and Sprint Velocity Summaries_.
+    - _Risk Analysis_ & _Release Shipping Predictions_ (with confidence scores).
+    - _Completed vs. Pending Task Breakdown_.
+    - _Recommended Actions_ (e.g. review reassignments, backfill splitting).
 
 ---
 
 ### 6. AI Voice Assistant (`/voice`)
-* **File:** `src/routes/voice.tsx`
-* **Features:**
+
+- **File:** `src/routes/voice.tsx`
+- **Features:**
   - **Interactive Voice Interface**: Microphone button with pulsing rings and animated audio equalizer wave.
   - **Conversational Chat**: Clean chat stream with voice playback support.
   - **Quick Suggestion Chips**:
-    - *"What was completed today?"*
-    - *"Which pull requests are pending?"*
-    - *"Who is working on Authentication?"*
-    - *"Show inactive contributors."*
-    - *"Which module has blockers?"*
+    - _"What was completed today?"_
+    - _"Which pull requests are pending?"_
+    - _"Who is working on Authentication?"_
+    - _"Show inactive contributors."_
+    - _"Which module has blockers?"_
 
 ---
 
 ### 7. Team Analytics (`/team`)
-* **File:** `src/routes/team.tsx`
-* **Features:**
+
+- **File:** `src/routes/team.tsx`
+- **Features:**
   - **Contributor Scorecards**: Individual productivity metrics (Commits, Closed Issues, Reviews) with letter grades.
   - **Contribution Comparison**: Bar chart comparing commits vs. reviews across developers.
   - **Issue Distribution**: Donut chart breaking down work into Bugs, Features, Chores, and Docs.
@@ -156,17 +164,19 @@ The platform connects to the GitHub REST API and OAuth 2.0 to provide:
 ---
 
 ### 8. Intelligence Reports (`/reports`)
-* **File:** `src/routes/reports.tsx`
-* **Features:**
-  - Pre-built digest templates: *Daily, Weekly, Sprint, and Monthly Reports*.
+
+- **File:** `src/routes/reports.tsx`
+- **Features:**
+  - Pre-built digest templates: _Daily, Weekly, Sprint, and Monthly Reports_.
   - Multi-format exports: **PDF**, **CSV**, and shareable URLs.
   - Export download history log.
 
 ---
 
 ### 9. Settings & Configurations (`/settings`)
-* **File:** `src/routes/settings.tsx`
-* **Features:**
+
+- **File:** `src/routes/settings.tsx`
+- **Features:**
   - Configuration cards for GitHub OAuth, AI Model selection (e.g. GPT-4o / Gemini), Theme, Voice Preferences, Notification channels (Slack/Email), and User Profile.
 
 ---
@@ -200,6 +210,7 @@ The platform connects to the GitHub REST API and OAuth 2.0 to provide:
 ### Dual-Affiliation Repository Fetching (Owned & Collaborated)
 
 GitHub's REST API separates repository access levels by `affiliation`:
+
 1. `GET /user/repos?affiliation=owner&sort=updated&per_page=100` $\rightarrow$ Returns repositories authored and owned by the user.
 2. `GET /user/repos?affiliation=collaborator&sort=updated&per_page=100` $\rightarrow$ Returns external repositories where the user has push/pull collaborator access.
 3. **Resilient Token Scope Fallback**: If an OAuth token has restricted third-party organization scope on private collaborator repos, the server automatically queries with the server's `GITHUB_ACCESS_TOKEN` (PAT) to ensure all collaborated projects are retrieved.
@@ -207,6 +218,7 @@ GitHub's REST API separates repository access levels by `affiliation`:
 ### Live Dashboard Aggregation (`GET /api/dashboard`)
 
 The aggregator endpoint combines multi-repo metrics:
+
 - **30-Day Activity Curve**: Aggregates daily commit timestamps and pull request creation events.
 - **Health Score Formula**:
   $$\text{Health Score} = \text{clamp}\Big(100 - (\text{openIssues} \times 2) - (\text{stalePRs} \times 3) + \text{recentCommits}_{7\text{d}},\, 0,\, 100\Big)$$
@@ -216,14 +228,14 @@ The aggregator endpoint combines multi-repo metrics:
 
 ## 🔌 Backend API Endpoints
 
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/auth/github` | Initiates GitHub OAuth login redirect |
-| `GET` | `/api/auth/github/callback` | Handles OAuth callback and exchanges code for token |
-| `GET` | `/api/auth/user` | Fetches authenticated user's GitHub profile |
-| `GET` | `/api/auth/logout` | Clears authentication cookies and session |
-| `GET` | `/api/repos` | Fetches owned and collaborated repositories via dual affiliation |
-| `GET` | `/api/dashboard` | Aggregates multi-repository metrics, 30-day activity, and health scores |
+| Method | Endpoint                    | Description                                                             |
+| :----- | :-------------------------- | :---------------------------------------------------------------------- |
+| `GET`  | `/api/auth/github`          | Initiates GitHub OAuth login redirect                                   |
+| `GET`  | `/api/auth/github/callback` | Handles OAuth callback and exchanges code for token                     |
+| `GET`  | `/api/auth/user`            | Fetches authenticated user's GitHub profile                             |
+| `GET`  | `/api/auth/logout`          | Clears authentication cookies and session                               |
+| `GET`  | `/api/repos`                | Fetches owned and collaborated repositories via dual affiliation        |
+| `GET`  | `/api/dashboard`            | Aggregates multi-repository metrics, 30-day activity, and health scores |
 
 ---
 
@@ -243,6 +255,7 @@ GITHUB_CALLBACK_URL=http://localhost:8080/api/auth/github/callback
 ```
 
 ### GitHub OAuth App Setup:
+
 1. Go to **[GitHub Developer Settings -> OAuth Apps](https://github.com/settings/developers)**.
 2. Click **"New OAuth App"**.
 3. Set **Homepage URL**: `http://localhost:8080`
@@ -254,19 +267,23 @@ GITHUB_CALLBACK_URL=http://localhost:8080/api/auth/github/callback
 ## 🚀 Getting Started
 
 ### 1. Install Dependencies
+
 ```bash
 npm install
 ```
 
 ### 2. Start the Development Server
+
 ```bash
 npm run dev
 ```
 
 ### 3. Open in Browser
+
 Visit **[http://localhost:8080](http://localhost:8080)** to preview and use the application.
 
 ### 4. Build for Production
+
 ```bash
 npm run build
 ```

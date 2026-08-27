@@ -23,7 +23,10 @@ function VoicePage() {
   const [listening, setListening] = useState(false);
   const [input, setInput] = useState("");
   const [msgs, setMsgs] = useState<Msg[]>([
-    { role: "assistant", text: "Hi Durga — ask me anything about your projects. I've reviewed today's activity across 12 repositories." },
+    {
+      role: "assistant",
+      text: "Hi Durga — ask me anything about your projects. I've reviewed today's activity across 12 repositories.",
+    },
   ]);
 
   const send = (text: string) => {
@@ -44,7 +47,10 @@ function VoicePage() {
             {listening && (
               <>
                 <span className="absolute inset-0 rounded-full bg-brand/40 animate-pulse-ring" />
-                <span className="absolute inset-0 rounded-full bg-brand-2/30 animate-pulse-ring" style={{ animationDelay: "0.4s" }} />
+                <span
+                  className="absolute inset-0 rounded-full bg-brand-2/30 animate-pulse-ring"
+                  style={{ animationDelay: "0.4s" }}
+                />
               </>
             )}
             <button
@@ -63,7 +69,10 @@ function VoicePage() {
                 <span
                   key={i}
                   className="w-1 rounded-full bg-brand-gradient"
-                  style={{ animation: `pulse 0.9s ease-in-out ${i * 0.05}s infinite alternate`, height: `${20 + Math.random() * 80}%` }}
+                  style={{
+                    animation: `pulse 0.9s ease-in-out ${i * 0.05}s infinite alternate`,
+                    height: `${20 + Math.random() * 80}%`,
+                  }}
                 />
               ))}
             </div>
@@ -73,7 +82,11 @@ function VoicePage() {
             <div className="text-xs text-muted-foreground mb-2 text-left">Quick suggestions</div>
             <div className="flex flex-wrap gap-2">
               {suggestions.map((s) => (
-                <button key={s} onClick={() => send(s)} className="text-xs px-3 py-1.5 rounded-full border border-border bg-card hover:bg-accent transition">
+                <button
+                  key={s}
+                  onClick={() => send(s)}
+                  className="text-xs px-3 py-1.5 rounded-full border border-border bg-card hover:bg-accent transition"
+                >
                   {s}
                 </button>
               ))}
@@ -83,7 +96,9 @@ function VoicePage() {
 
         <Card className="p-0 lg:col-span-3 flex flex-col overflow-hidden" lift={false}>
           <div className="p-4 border-b border-border flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-brand-gradient grid place-items-center text-white"><Sparkles className="h-4 w-4" /></div>
+            <div className="h-8 w-8 rounded-lg bg-brand-gradient grid place-items-center text-white">
+              <Sparkles className="h-4 w-4" />
+            </div>
             <div>
               <div className="font-semibold text-sm">GitInsight AI</div>
               <div className="text-[11px] text-muted-foreground">Conversation · today</div>
@@ -92,14 +107,18 @@ function VoicePage() {
           <div className="flex-1 p-4 space-y-4 min-h-[420px] max-h-[520px] overflow-y-auto">
             {msgs.map((m, i) => (
               <div key={i} className={`flex gap-3 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
-                <div className={`h-8 w-8 rounded-full shrink-0 grid place-items-center text-xs font-semibold ${
-                  m.role === "user" ? "bg-muted" : "bg-brand-gradient text-white"
-                }`}>
+                <div
+                  className={`h-8 w-8 rounded-full shrink-0 grid place-items-center text-xs font-semibold ${
+                    m.role === "user" ? "bg-muted" : "bg-brand-gradient text-white"
+                  }`}
+                >
                   {m.role === "user" ? "DR" : <Sparkles className="h-4 w-4" />}
                 </div>
-                <div className={`rounded-2xl px-4 py-2.5 text-sm max-w-[75%] ${
-                  m.role === "user" ? "bg-brand-gradient text-white" : "bg-muted"
-                }`}>
+                <div
+                  className={`rounded-2xl px-4 py-2.5 text-sm max-w-[75%] ${
+                    m.role === "user" ? "bg-brand-gradient text-white" : "bg-muted"
+                  }`}
+                >
                   {m.text}
                   {m.role === "assistant" && (
                     <button className="ml-2 inline-flex items-center gap-1 text-[11px] opacity-70 hover:opacity-100">
@@ -118,7 +137,9 @@ function VoicePage() {
               placeholder="Ask GitInsight AI…"
               className="flex-1 h-11 px-4 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-brand/40"
             />
-            <Button onClick={() => send(input)}><Send className="h-4 w-4" /> Send</Button>
+            <Button onClick={() => send(input)}>
+              <Send className="h-4 w-4" /> Send
+            </Button>
           </div>
         </Card>
       </div>

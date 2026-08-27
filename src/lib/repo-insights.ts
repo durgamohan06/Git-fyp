@@ -54,13 +54,13 @@ async function githubFetch<T>(endpoint: string, token: string): Promise<T | null
  */
 export async function fetchUserReposByAffiliation(
   token: string,
-  username: string
+  username: string,
 ): Promise<{ ownedRepos: SimplifiedRepo[]; collaboratedRepos: SimplifiedRepo[] }> {
   const cleanToken = sanitizeToken(token);
   const rawRepos =
     (await githubFetch<any[]>(
       "/user/repos?sort=updated&per_page=100&affiliation=owner,collaborator,organization_member",
-      cleanToken
+      cleanToken,
     )) || [];
 
   const normalizedUsername = username.toLowerCase();
@@ -108,15 +108,16 @@ export async function fetchUserReposByAffiliation(
  */
 export async function fetchContributedReposFromEvents(
   token: string,
-  username: string
+  username: string,
 ): Promise<ContributedRepo[]> {
   const cleanToken = sanitizeToken(token);
   // Fetch user events (up to 100 events)
-  const events = (await githubFetch<any[]>(`/users/${username}/events?per_page=100`, cleanToken)) || [];
+  const events =
+    (await githubFetch<any[]>(`/users/${username}/events?per_page=100`, cleanToken)) || [];
 
   // Filter events for PushEvent and PullRequestEvent
   const contributionEvents = events.filter(
-    (e) => e.type === "PushEvent" || e.type === "PullRequestEvent"
+    (e) => e.type === "PushEvent" || e.type === "PullRequestEvent",
   );
 
   // Map to collect unique repository contribution stats
@@ -174,7 +175,8 @@ export async function fetchContributedReposFromEvents(
           default_branch: repoDetails.default_branch || "main",
           open_issues_count: repoDetails.open_issues_count ?? 0,
           private: Boolean(repoDetails.private),
-          is_collaborator: (repoDetails.owner?.login || "").toLowerCase() !== username.toLowerCase(),
+          is_collaborator:
+            (repoDetails.owner?.login || "").toLowerCase() !== username.toLowerCase(),
           is_owner: (repoDetails.owner?.login || "").toLowerCase() === username.toLowerCase(),
           owner: {
             login: repoDetails.owner?.login || fullName.split("/")[0] || "unknown",
@@ -211,7 +213,7 @@ export async function fetchContributedReposFromEvents(
         last_contributed_at: stats.lastContributedAt,
         total_contributions: stats.count,
       };
-    })
+    }),
   );
 
   return contributedRepos;
@@ -229,7 +231,7 @@ export async function handleGetRepoInsights(request: Request): Promise<Response>
         error: "Unauthorized",
         message: "GitHub access token is required. Pass it via Authorization header or log in.",
       }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
+      { status: 401, headers: { "Content-Type": "application/json" } },
     );
   }
 
@@ -248,7 +250,9 @@ export async function handleGetRepoInsights(request: Request): Promise<Response>
 
     const userData = await userRes.json().catch(() => ({}));
     if (!userRes.ok || !userData.login) {
-      throw new Error(userData.message || "Failed to authenticate with GitHub. Please check your token or login.");
+      throw new Error(
+        userData.message || "Failed to authenticate with GitHub. Please check your token or login.",
+      );
     }
 
     const username = userData.login;
@@ -281,7 +285,7 @@ export async function handleGetRepoInsights(request: Request): Promise<Response>
         error: "Repo Insights Error",
         message: err.message || "Failed to fetch repository insights from GitHub.",
       }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { "Content-Type": "application/json" } },
     );
   }
 }
@@ -323,7 +327,7 @@ export async function nodeRepoInsightsHandler(req: any, res: any) {
       JSON.stringify({
         error: "Unauthorized",
         message: "GitHub access token is required. Please log in or configure GITHUB_ACCESS_TOKEN.",
-      })
+      }),
     );
     return;
   }
@@ -371,7 +375,7 @@ export async function nodeRepoInsightsHandler(req: any, res: any) {
       JSON.stringify({
         error: "Repo Insights Error",
         message: err.message || "Failed to fetch repository insights from GitHub.",
-      })
+      }),
     );
   }
 }

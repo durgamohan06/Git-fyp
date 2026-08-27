@@ -22,7 +22,8 @@ export const Route = createFileRoute("/dashboard")({
       { title: "Dashboard · GitInsight AI" },
       {
         name: "description",
-        content: "Real-time project health, commits, PRs, and AI blockers across your GitHub repositories.",
+        content:
+          "Real-time project health, commits, PRs, and AI blockers across your GitHub repositories.",
       },
     ],
   }),
@@ -44,12 +45,16 @@ function Dashboard() {
         "Content-Type": "application/json",
       };
 
-      const url = forceRefresh ? `/api/dashboard?refresh=true&_t=${Date.now()}` : `/api/dashboard?_t=${Date.now()}`;
+      const url = forceRefresh
+        ? `/api/dashboard?refresh=true&_t=${Date.now()}`
+        : `/api/dashboard?_t=${Date.now()}`;
       const res = await fetch(url, { headers, credentials: "include" });
       const json = await res.json();
 
       if (!res.ok) {
-        throw new Error(json.message || json.error || `Failed to fetch dashboard data (${res.status})`);
+        throw new Error(
+          json.message || json.error || `Failed to fetch dashboard data (${res.status})`,
+        );
       }
 
       setData(json);
@@ -119,7 +124,9 @@ function Dashboard() {
           <div className="h-11 w-11 rounded-2xl bg-danger/10 text-danger mx-auto grid place-items-center mb-3">
             <AlertCircle className="h-6 w-6" />
           </div>
-          <h3 className="text-base font-semibold text-foreground">Failed to Load Live GitHub Data</h3>
+          <h3 className="text-base font-semibold text-foreground">
+            Failed to Load Live GitHub Data
+          </h3>
           <p className="text-xs text-muted-foreground max-w-md mx-auto mt-1 mb-4">{error}</p>
           <Button onClick={() => fetchDashboardData()}>
             <RefreshCw className="h-4 w-4" /> Retry
@@ -131,7 +138,10 @@ function Dashboard() {
       {loading && !data && (
         <div className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-3">
-            <Card className="p-6 lg:col-span-1 h-64 animate-pulse flex flex-col items-center justify-center" lift={false}>
+            <Card
+              className="p-6 lg:col-span-1 h-64 animate-pulse flex flex-col items-center justify-center"
+              lift={false}
+            >
               <div className="h-32 w-32 rounded-full bg-muted" />
               <div className="h-4 w-24 bg-muted rounded mt-4" />
             </Card>
@@ -161,12 +171,30 @@ function Dashboard() {
               <div className="text-sm text-muted-foreground mb-2">Project Health Score</div>
               <CircularProgress
                 value={data.healthScore}
-                label={data.healthScore >= 80 ? "Healthy Project" : data.healthScore >= 60 ? "Moderate Risks" : "Critical Attention"}
+                label={
+                  data.healthScore >= 80
+                    ? "Healthy Project"
+                    : data.healthScore >= 60
+                      ? "Moderate Risks"
+                      : "Critical Attention"
+                }
                 sublabel={`Across ${data.totalRepos} repositories`}
               />
               <div className="mt-4 flex gap-2">
-                <Badge tone={data.healthScore >= 80 ? "success" : data.healthScore >= 60 ? "warning" : "danger"}>
-                  {data.healthScore >= 80 ? "↑ Optimal" : data.healthScore >= 60 ? "→ Needs Review" : "↓ Critical"}
+                <Badge
+                  tone={
+                    data.healthScore >= 80
+                      ? "success"
+                      : data.healthScore >= 60
+                        ? "warning"
+                        : "danger"
+                  }
+                >
+                  {data.healthScore >= 80
+                    ? "↑ Optimal"
+                    : data.healthScore >= 60
+                      ? "→ Needs Review"
+                      : "↓ Critical"}
                 </Badge>
                 <Badge tone="brand">AI verified</Badge>
               </div>
@@ -206,7 +234,9 @@ function Dashboard() {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <div className="font-semibold">Project Progress</div>
-                  <div className="text-xs text-muted-foreground">Completion & activity by repository</div>
+                  <div className="text-xs text-muted-foreground">
+                    Completion & activity by repository
+                  </div>
                 </div>
                 <Badge tone="brand">Live</Badge>
               </div>
@@ -233,13 +263,26 @@ function Dashboard() {
 
             <Card className="p-6">
               <div className="font-semibold mb-1">AI Blockers</div>
-              <div className="text-xs text-muted-foreground mb-4">Detected in your repositories</div>
+              <div className="text-xs text-muted-foreground mb-4">
+                Detected in your repositories
+              </div>
               <div className="space-y-3">
                 {data.blockers.map((b, idx) => (
-                  <div key={idx} className="rounded-xl border border-border p-3 hover:bg-accent/50 transition">
+                  <div
+                    key={idx}
+                    className="rounded-xl border border-border p-3 hover:bg-accent/50 transition"
+                  >
                     <div className="flex items-start justify-between gap-2">
                       <div className="text-sm font-medium leading-snug">{b.title}</div>
-                      <Badge tone={b.priority === "Critical" ? "danger" : b.priority === "High" ? "warning" : "brand"}>
+                      <Badge
+                        tone={
+                          b.priority === "Critical"
+                            ? "danger"
+                            : b.priority === "High"
+                              ? "warning"
+                              : "brand"
+                        }
+                      >
                         {b.priority}
                       </Badge>
                     </div>
@@ -257,7 +300,9 @@ function Dashboard() {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <div className="font-semibold">Commit & PR Activity</div>
-                  <div className="text-xs text-muted-foreground">Last 30 days across your repositories</div>
+                  <div className="text-xs text-muted-foreground">
+                    Last 30 days across your repositories
+                  </div>
                 </div>
                 <div className="flex gap-2 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
@@ -283,7 +328,11 @@ function Dashboard() {
                         <stop offset="100%" stopColor="var(--color-brand-2)" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 3" vertical={false} />
+                    <CartesianGrid
+                      stroke="var(--color-border)"
+                      strokeDasharray="3 3"
+                      vertical={false}
+                    />
                     <XAxis
                       dataKey="day"
                       tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
@@ -304,8 +353,20 @@ function Dashboard() {
                         fontSize: 12,
                       }}
                     />
-                    <Area type="monotone" dataKey="commits" stroke="var(--color-brand)" strokeWidth={2.2} fill="url(#g1)" />
-                    <Area type="monotone" dataKey="prs" stroke="var(--color-brand-2)" strokeWidth={2.2} fill="url(#g2)" />
+                    <Area
+                      type="monotone"
+                      dataKey="commits"
+                      stroke="var(--color-brand)"
+                      strokeWidth={2.2}
+                      fill="url(#g1)"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="prs"
+                      stroke="var(--color-brand-2)"
+                      strokeWidth={2.2}
+                      fill="url(#g2)"
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -319,7 +380,13 @@ function Dashboard() {
                   <div key={col} className="flex flex-col gap-1">
                     {data.heatmap.map((row, rowIdx) => {
                       const v = row[col];
-                      const bg = ["bg-muted", "bg-brand/25", "bg-brand/45", "bg-brand/70", "bg-brand"][v];
+                      const bg = [
+                        "bg-muted",
+                        "bg-brand/25",
+                        "bg-brand/45",
+                        "bg-brand/70",
+                        "bg-brand",
+                      ][v];
                       return <div key={rowIdx} className={`h-3 w-3 rounded-sm ${bg}`} />;
                     })}
                   </div>
@@ -344,7 +411,9 @@ function Dashboard() {
             <div className="p-6 flex items-center justify-between">
               <div>
                 <div className="font-semibold">Repositories</div>
-                <div className="text-xs text-muted-foreground">All monitored GitHub repositories</div>
+                <div className="text-xs text-muted-foreground">
+                  All monitored GitHub repositories
+                </div>
               </div>
               <Link to="/repositories" className="text-sm text-brand font-medium hover:underline">
                 View all →
@@ -354,7 +423,16 @@ function Dashboard() {
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 text-muted-foreground">
                   <tr>
-                    {["Repository", "Branch", "Commits (30d)", "PRs", "Issues", "Updated", "Status", ""].map((h) => (
+                    {[
+                      "Repository",
+                      "Branch",
+                      "Commits (30d)",
+                      "PRs",
+                      "Issues",
+                      "Updated",
+                      "Status",
+                      "",
+                    ].map((h) => (
                       <th key={h} className="text-left font-medium px-6 py-3 whitespace-nowrap">
                         {h}
                       </th>
@@ -373,7 +451,15 @@ function Dashboard() {
                       <td className="px-6 py-3">{r.issues}</td>
                       <td className="px-6 py-3 text-muted-foreground">{r.updated}</td>
                       <td className="px-6 py-3">
-                        <Badge tone={r.status === "Healthy" ? "success" : r.status === "Delayed" ? "warning" : "danger"}>
+                        <Badge
+                          tone={
+                            r.status === "Healthy"
+                              ? "success"
+                              : r.status === "Delayed"
+                                ? "warning"
+                                : "danger"
+                          }
+                        >
                           {r.status}
                         </Badge>
                       </td>

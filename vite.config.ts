@@ -7,11 +7,15 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import { nodeApiReposHandler } from "./src/lib/github-api";
 import { nodeDashboardHandler } from "./src/lib/dashboard-api";
 import { nodeRepoInsightsHandler } from "./src/lib/repo-insights";
+import { nodeRepoDetailHandler } from "./src/lib/repo-detail-api";
 import { nodeAuthRouter } from "./src/lib/github-oauth";
 
 const apiDevPlugin: Plugin = {
   name: "api-dev-routes",
   configureServer(server) {
+    server.middlewares.use("/api/repos/detail", async (req, res) => {
+      await nodeRepoDetailHandler(req, res);
+    });
     server.middlewares.use("/api/repos/insights", async (req, res) => {
       await nodeRepoInsightsHandler(req, res);
     });

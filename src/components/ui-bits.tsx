@@ -36,7 +36,9 @@ export function Badge({
     cyan: "bg-accent-cyan/15 text-accent-cyan",
   };
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${map[tone]} ${className}`}>
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${map[tone]} ${className}`}
+    >
       {children}
     </span>
   );
@@ -58,13 +60,21 @@ export function CountUp({ value, duration = 900 }: { value: number; duration?: n
   return <>{n.toLocaleString()}</>;
 }
 
-export function Sparkline({ data, color = "var(--color-brand)" }: { data: readonly number[] | number[]; color?: string }) {
+export function Sparkline({
+  data,
+  color = "var(--color-brand)",
+}: {
+  data: readonly number[] | number[];
+  color?: string;
+}) {
   const w = 100;
   const h = 32;
   const min = Math.min(...data);
   const max = Math.max(...data);
   const range = max - min || 1;
-  const pts = data.map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / range) * h}`).join(" ");
+  const pts = data
+    .map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / range) * h}`)
+    .join(" ");
   const id = useRef(`sp-${Math.random().toString(36).slice(2)}`).current;
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-8">
@@ -74,13 +84,32 @@ export function Sparkline({ data, color = "var(--color-brand)" }: { data: readon
           <stop offset="100%" stopColor={color} stopOpacity="0" />
         </linearGradient>
       </defs>
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.75" strokeLinejoin="round" strokeLinecap="round" />
+      <polyline
+        points={pts}
+        fill="none"
+        stroke={color}
+        strokeWidth="1.75"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
       <polygon points={`0,${h} ${pts} ${w},${h}`} fill={`url(#${id})`} />
     </svg>
   );
 }
 
-export function CircularProgress({ value, size = 180, stroke = 14, label, sublabel }: { value: number; size?: number; stroke?: number; label?: string; sublabel?: string }) {
+export function CircularProgress({
+  value,
+  size = 180,
+  stroke = 14,
+  label,
+  sublabel,
+}: {
+  value: number;
+  size?: number;
+  stroke?: number;
+  label?: string;
+  sublabel?: string;
+}) {
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const [progress, setProgress] = useState(0);
@@ -98,7 +127,14 @@ export function CircularProgress({ value, size = 180, stroke = 14, label, sublab
             <stop offset="100%" stopColor="var(--color-brand-2)" />
           </linearGradient>
         </defs>
-        <circle cx={size / 2} cy={size / 2} r={r} stroke="var(--color-muted)" strokeWidth={stroke} fill="none" />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          stroke="var(--color-muted)"
+          strokeWidth={stroke}
+          fill="none"
+        />
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -130,11 +166,14 @@ export function Button({
   variant = "primary",
   className = "",
   ...rest
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "secondary" | "ghost" | "outline" }) {
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: "primary" | "secondary" | "ghost" | "outline";
+}) {
   const base =
     "inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl text-sm font-medium transition-all disabled:opacity-50";
   const map = {
-    primary: "bg-brand-gradient text-white shadow-lg shadow-brand/25 hover:shadow-xl hover:shadow-brand/30 hover:-translate-y-0.5",
+    primary:
+      "bg-brand-gradient text-white shadow-lg shadow-brand/25 hover:shadow-xl hover:shadow-brand/30 hover:-translate-y-0.5",
     secondary: "bg-card border border-border hover:bg-accent",
     outline: "border border-border hover:bg-accent",
     ghost: "hover:bg-accent",

@@ -162,7 +162,7 @@ export async function fetchGitHubUserRepos(token: string): Promise<{
             "User-Agent": "GitInsight-AI",
             "X-GitHub-Api-Version": "2022-11-28",
           },
-        }
+        },
       );
       if (patCollabRes.ok) {
         const patCollab = (await patCollabRes.json()) as any[];
@@ -193,11 +193,14 @@ export async function fetchGitHubUserRepos(token: string): Promise<{
 export async function handleGetRepos(request: Request): Promise<Response> {
   if (request.method !== "GET") {
     return new Response(
-      JSON.stringify({ error: "Method Not Allowed", message: "Only GET is supported on /api/repos" }),
+      JSON.stringify({
+        error: "Method Not Allowed",
+        message: "Only GET is supported on /api/repos",
+      }),
       {
         status: 405,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   }
 
@@ -213,7 +216,7 @@ export async function handleGetRepos(request: Request): Promise<Response> {
       {
         status: 401,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   }
 
@@ -247,7 +250,7 @@ export async function handleGetRepos(request: Request): Promise<Response> {
       {
         status,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   }
 }
@@ -290,7 +293,7 @@ export async function nodeApiReposHandler(req: any, res: any) {
         error: "Unauthorized",
         message:
           "GitHub access token is required. Pass it via 'Authorization: Bearer <token>' header or define GITHUB_ACCESS_TOKEN in your .env file.",
-      })
+      }),
     );
     return;
   }
@@ -319,7 +322,7 @@ export async function nodeApiReposHandler(req: any, res: any) {
       JSON.stringify({
         error: "GitHub API Error",
         message: err.message || "Failed to fetch repositories from GitHub",
-      })
+      }),
     );
   }
 }

@@ -189,17 +189,34 @@
 }
 
 @keyframes blob {
-  0%, 100% { transform: translate(0,0) scale(1); }
-  33% { transform: translate(40px, -30px) scale(1.1); }
-  66% { transform: translate(-30px, 20px) scale(0.95); }
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(40px, -30px) scale(1.1);
+  }
+  66% {
+    transform: translate(-30px, 20px) scale(0.95);
+  }
 }
 @keyframes pulse-ring {
-  0% { transform: scale(0.9); opacity: 0.7; }
-  100% { transform: scale(1.6); opacity: 0; }
+  0% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
 }
 @keyframes shimmer {
-  0% { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
 }
 @utility animate-blob {
   animation: blob 14s ease-in-out infinite;
@@ -208,10 +225,12 @@
   animation: pulse-ring 1.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
 }
 @utility shimmer {
-  background: linear-gradient(90deg,
+  background: linear-gradient(
+    90deg,
     color-mix(in oklab, var(--color-muted) 60%, transparent) 0%,
     color-mix(in oklab, var(--color-muted-foreground) 15%, transparent) 50%,
-    color-mix(in oklab, var(--color-muted) 60%, transparent) 100%);
+    color-mix(in oklab, var(--color-muted) 60%, transparent) 100%
+  );
   background-size: 800px 100%;
   animation: shimmer 1.8s infinite linear;
 }

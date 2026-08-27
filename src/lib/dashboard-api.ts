@@ -124,7 +124,7 @@ export async function handleGetDashboard(request: Request): Promise<Response> {
         error: "Unauthorized",
         message: "GitHub access token is required. Please log in or configure GITHUB_ACCESS_TOKEN.",
       }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
+      { status: 401, headers: { "Content-Type": "application/json" } },
     );
   }
 
@@ -180,8 +180,14 @@ export async function handleGetDashboard(request: Request): Promise<Response> {
         const repoName = repo.name;
 
         const [commitsRaw, pullsRaw, contribsRaw] = await Promise.all([
-          githubFetch<any[]>(`/repos/${owner}/${repoName}/commits?since=${sinceDateIso}&per_page=100`, cleanToken),
-          githubFetch<any[]>(`/repos/${owner}/${repoName}/pulls?state=open&per_page=50`, cleanToken),
+          githubFetch<any[]>(
+            `/repos/${owner}/${repoName}/commits?since=${sinceDateIso}&per_page=100`,
+            cleanToken,
+          ),
+          githubFetch<any[]>(
+            `/repos/${owner}/${repoName}/pulls?state=open&per_page=50`,
+            cleanToken,
+          ),
           githubFetch<any[]>(`/repos/${owner}/${repoName}/contributors?per_page=30`, cleanToken),
         ]);
 
@@ -215,7 +221,10 @@ export async function handleGetDashboard(request: Request): Promise<Response> {
               if (blockers.length < 4) {
                 blockers.push({
                   title: `PR #${pr.number}: ${pr.title.slice(0, 40)}...`,
-                  priority: prDate < new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) ? "Critical" : "High",
+                  priority:
+                    prDate < new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+                      ? "Critical"
+                      : "High",
                   impact: `Pending review in ${repoName} for >3 days`,
                   fix: `Assign reviewer or merge PR #${pr.number} into ${repo.default_branch || "main"}.`,
                   repo: repoName,
@@ -236,11 +245,16 @@ export async function handleGetDashboard(request: Request): Promise<Response> {
         if (repoPullsCount > 5 || pureIssues > 8) status = "Delayed";
         if (commits.length === 0 && (repoPullsCount > 0 || pureIssues > 0)) status = "Blocked";
 
-        const progressScore = Math.min(100, Math.max(25, Math.round(50 + commits.length * 2 - pureIssues * 3)));
+        const progressScore = Math.min(
+          100,
+          Math.max(25, Math.round(50 + commits.length * 2 - pureIssues * 3)),
+        );
         const repoHealthScore = calculateHealthScore(
           pureIssues,
           pulls.filter((p) => new Date(p.created_at) < threeDaysAgo).length,
-          commits.filter((c) => new Date(c.commit?.author?.date || "").getTime() >= sevenDaysAgo.getTime()).length
+          commits.filter(
+            (c) => new Date(c.commit?.author?.date || "").getTime() >= sevenDaysAgo.getTime(),
+          ).length,
         );
 
         return {
@@ -259,7 +273,7 @@ export async function handleGetDashboard(request: Request): Promise<Response> {
           forks: repo.forks_count || 0,
           health: repoHealthScore,
         };
-      })
+      }),
     );
 
     if (blockers.length === 0) {
@@ -301,7 +315,14 @@ export async function handleGetDashboard(request: Request): Promise<Response> {
         value: totalRepos,
         trend: 8,
         icon: "GitBranch",
-        spark: [Math.max(1, totalRepos - 2), totalRepos - 1, totalRepos, totalRepos, totalRepos, totalRepos],
+        spark: [
+          Math.max(1, totalRepos - 2),
+          totalRepos - 1,
+          totalRepos,
+          totalRepos,
+          totalRepos,
+          totalRepos,
+        ],
       },
       {
         label: "Commits (30d)",
@@ -341,7 +362,7 @@ export async function handleGetDashboard(request: Request): Promise<Response> {
     ];
 
     const heatmap: number[][] = Array.from({ length: 7 }, () =>
-      Array.from({ length: 26 }, () => (Math.random() > 0.4 ? Math.floor(Math.random() * 5) : 0))
+      Array.from({ length: 26 }, () => (Math.random() > 0.4 ? Math.floor(Math.random() * 5) : 0)),
     );
 
     const payload: DashboardDataResponse = {
@@ -375,7 +396,7 @@ export async function handleGetDashboard(request: Request): Promise<Response> {
         error: "Dashboard API Error",
         message: err.message || "Failed to aggregate dashboard metrics from GitHub.",
       }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { "Content-Type": "application/json" } },
     );
   }
 }

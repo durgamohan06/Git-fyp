@@ -78,7 +78,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "GitInsight AI — AI-Powered GitHub Project Intelligence" },
-      { name: "description", content: "Track software projects intelligently with AI. GitInsight AI turns GitHub activity into actionable intelligence for project managers." },
+      {
+        name: "description",
+        content:
+          "Track software projects intelligently with AI. GitInsight AI turns GitHub activity into actionable intelligence for project managers.",
+      },
       { property: "og:title", content: "GitInsight AI" },
       { property: "og:description", content: "AI-powered GitHub project intelligence dashboard." },
       { property: "og:type", content: "website" },
@@ -87,7 +91,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
+      },
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.png", type: "image/png" },
     ],
