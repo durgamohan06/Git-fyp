@@ -235,6 +235,7 @@ The aggregator endpoint combines multi-repo metrics:
 | `GET`  | `/api/auth/user`            | Fetches authenticated user's GitHub profile                             |
 | `GET`  | `/api/auth/logout`          | Clears authentication cookies and session                               |
 | `GET`  | `/api/repos`                | Fetches owned and collaborated repositories via dual affiliation        |
+| `GET`  | `/api/repos/detail`         | Fetches comprehensive 8-module analytics payload for a specific repo    |
 | `GET`  | `/api/dashboard`            | Aggregates multi-repository metrics, 30-day activity, and health scores |
 
 ---
@@ -303,16 +304,17 @@ Git-fyp-main/
 │   │   ├── __root.tsx            # Root HTML layout, QueryClient provider & error boundaries
 │   │   ├── index.tsx             # Landing page with GitHub OAuth login trigger
 │   │   ├── dashboard.tsx         # Executive dashboard with live activity charts & metrics
-│   │   ├── repositories.tsx      # Repository directory with Owned vs Collaborated tabs
-│   │   ├── repositories.$id.tsx  # 8-tab repository deep-dive analytics
+│   │   ├── repositories.index.tsx# Repository directory with Owned vs Collaborated tabs
+│   │   ├── repositories.$id.tsx  # 8-section repository deep-dive analytics
 │   │   ├── ai-insights.tsx       # AI digests, risk analysis & recommendations
 │   │   ├── voice.tsx             # AI Voice Assistant with soundwave UI
 │   │   ├── team.tsx              # Team productivity scorecards & skill radar
 │   │   ├── reports.tsx           # Report generator (PDF / CSV export)
-│   │   └── settings.tsx          # System, AI model & notification settings
+│   │   ├── settings.tsx          # System, AI model & notification settings
 │   ├── lib/
 │   │   ├── env.ts                # Zero-dependency .env loader for server & Vite runtimes
 │   │   ├── github-api.ts         # Dual-affiliation repo fetcher (owned & collaborated)
+│   │   ├── repo-detail-api.ts    # Service for fetching 8-module repo analytics payload
 │   │   ├── dashboard-api.ts      # Multi-repository activity & health score aggregator
 │   │   ├── github-oauth.ts       # OAuth 2.0 login, callback, session & user profile handler
 │   │   ├── mock-data.ts          # Static sample dataset for offline fallbacks
