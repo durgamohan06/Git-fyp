@@ -30,7 +30,10 @@
   - [7. Team Analytics (`/team`)](#7-team-analytics-team)
   - [8. Intelligence Reports (`/reports`)](#8-intelligence-reports-reports)
   - [9. Settings & Configurations (`/settings`)](#9-settings--configurations-settings)
-- [GitHub OAuth 2.0 Authentication](#-github-oauth-20-authentication)
+- [GitHub Integration Architecture](#-github-integration-architecture)
+  - [OAuth 2.0 Flow](#github-oauth-20-authentication)
+  - [Dual-Affiliation Repository Fetching](#dual-affiliation-repository-fetching-owned--collaborated)
+  - [Live Dashboard Aggregation](#live-dashboard-aggregation-get-apidashboard)
 - [Backend API Endpoints](#-backend-api-endpoints)
 - [Environment Setup](#-environment-setup)
 - [Getting Started](#-getting-started)
@@ -43,8 +46,9 @@
 **GitInsight AI** addresses the common software coordination bottleneck where engineering managers and teams spend substantial time manually tracking GitHub commits, PR reviews, and standup blockers. 
 
 The platform connects to the GitHub REST API and OAuth 2.0 to provide:
-- **Instant Project Visibility**: Real-time project health scoring and module completion tracking.
-- **AI Blocker Detection**: Flagging stale PRs, failing preview builds, and delayed migrations before they block releases.
+- **Instant Project Visibility**: Real-time project health scoring, commit velocity, and module completion tracking.
+- **Collaborator & Owned Repository Separation**: Distinguishes between repositories created by the user and projects where the user is an invited collaborator.
+- **AI Blocker Detection**: Flagging stale PRs, open issue backlogs, and delayed releases before they block progress.
 - **Voice Assistant**: An interactive voice/chat interface allowing leaders to ask natural language questions like *"What was completed today?"* or *"Which PRs are pending?"*.
 - **Developer Analytics**: Contributor velocity scorecards, skill radar charts, and work distribution graphs.
 
@@ -76,11 +80,9 @@ The platform connects to the GitHub REST API and OAuth 2.0 to provide:
 ### 2. Executive Dashboard (`/dashboard`)
 * **File:** `src/routes/dashboard.tsx`
 * **Features:**
-  - **Personalized Header**: Dynamic greeting with the authenticated user's name.
-  - **Project Health Score**: Animated circular progress ring showing overall multi-repository health.
-  - **Metric Stat Cards**: 6 cards with sparklines displaying Repositories, Commits Today, Open Issues, Open PRs, Active Contributors, and AI Blockers.
-  - **Module Progress**: Color-coded progress meters tracking completion across components.
-  - **AI Blockers Widget**: Ranked blocker cards with priority tags (`Critical`, `High`, `Medium`) and impact summaries.
+  - **Personalized Header**: Dynamic greeting with the authenticated user's name (`Good Morning, @User 👋`).
+  - **Project Health Score**: Animated circular progress ring showing overall multi-repository health (computed from open issues, stale PRs, and recent commit velocity).
+  - **Metric Stat Cards**: 6 cards with sparklines displaying Repositories, Commits (30d), Open Issues, Open PRs, Active Contributors, and AI Blockers.
   - **Activity Area Chart**: 30-day interactive area chart tracking Commits vs. PR volume.
   - **Contribution Heatmap**: 26-week GitHub-style activity grid.
   - **Monitored Repositories Table**: Tabular overview with direct links to repository drill-downs.
@@ -90,10 +92,12 @@ The platform connects to the GitHub REST API and OAuth 2.0 to provide:
 ### 3. Repositories Directory (`/repositories`)
 * **File:** `src/routes/repositories.tsx`
 * **Features:**
-  - **Live GitHub API Data**: Direct integration with `GET /api/repos`.
-  - **Dynamic Search & Filtering**: Real-time filtering by repository name/description and programming languages.
+  - **3-Tab Affiliation Segmentation**:
+    - 📁 **All Repositories**: Complete list of connected repositories.
+    - 👤 **My Owned Repos**: Repositories created directly by the user.
+    - 🤝 **Collaborated Repos**: Repositories where the user has been invited as a collaborator (e.g. `durgamohan06/Git-fyp`), styled with a purple **Collaborator** badge and owner avatar.
+  - **Dynamic Search & Filtering**: Real-time filtering by repository name, owner, description, and programming languages.
   - **Loading Skeletons**: Smooth animated placeholder cards while fetching data.
-  - **Error UI**: Informative error cards with retry triggers and token configuration options.
   - **Token Modal**: Quick-configure personal access token directly in the browser for flexible testing.
   - **Repo Cards**: Shows repo visibility (Public/Private), language badge, star count, fork count, default branch, and relative update time.
 
@@ -167,9 +171,9 @@ The platform connects to the GitHub REST API and OAuth 2.0 to provide:
 
 ---
 
-## 🔐 GitHub OAuth 2.0 Authentication
+## 🔐 GitHub Integration Architecture
 
-GitInsight AI includes a secure, end-to-end GitHub OAuth 2.0 flow:
+### GitHub OAuth 2.0 Authentication
 
 ```
 [ User Clicks "Continue with GitHub" ]
@@ -193,12 +197,20 @@ GitInsight AI includes a secure, end-to-end GitHub OAuth 2.0 flow:
 [ Redirects User to /dashboard with Live Profile & Repositories ]
 ```
 
-### Authentication Features:
-- **`GET /api/auth/github`**: Generates and redirects to the official GitHub authorization URL.
-- **`GET /api/auth/github/callback`**: Securely handles authorization code exchange on the server.
-- **`GET /api/auth/user`**: Returns the current authenticated user profile (`login`, `name`, `avatar_url`, `email`).
-- **`GET /api/auth/logout`**: Clears authentication cookies and local session data.
-- **Resilient Fallback**: Zero-dependency environment loader (`src/lib/env.ts`) ensures `.env` credentials are read across both local development and production SSR.
+### Dual-Affiliation Repository Fetching (Owned & Collaborated)
+
+GitHub's REST API separates repository access levels by `affiliation`:
+1. `GET /user/repos?affiliation=owner&sort=updated&per_page=100` $\rightarrow$ Returns repositories authored and owned by the user.
+2. `GET /user/repos?affiliation=collaborator&sort=updated&per_page=100` $\rightarrow$ Returns external repositories where the user has push/pull collaborator access.
+3. **Resilient Token Scope Fallback**: If an OAuth token has restricted third-party organization scope on private collaborator repos, the server automatically queries with the server's `GITHUB_ACCESS_TOKEN` (PAT) to ensure all collaborated projects are retrieved.
+
+### Live Dashboard Aggregation (`GET /api/dashboard`)
+
+The aggregator endpoint combines multi-repo metrics:
+- **30-Day Activity Curve**: Aggregates daily commit timestamps and pull request creation events.
+- **Health Score Formula**:
+  $$\text{Health Score} = \text{clamp}\Big(100 - (\text{openIssues} \times 2) - (\text{stalePRs} \times 3) + \text{recentCommits}_{7\text{d}},\, 0,\, 100\Big)$$
+- **Performance Caching**: In-memory 60-second TTL cache with `_t` timestamp cache-busting on manual sync requests.
 
 ---
 
@@ -210,7 +222,8 @@ GitInsight AI includes a secure, end-to-end GitHub OAuth 2.0 flow:
 | `GET` | `/api/auth/github/callback` | Handles OAuth callback and exchanges code for token |
 | `GET` | `/api/auth/user` | Fetches authenticated user's GitHub profile |
 | `GET` | `/api/auth/logout` | Clears authentication cookies and session |
-| `GET` | `/api/repos` | Fetches authenticated user's repositories with simplified schema |
+| `GET` | `/api/repos` | Fetches owned and collaborated repositories via dual affiliation |
+| `GET` | `/api/dashboard` | Aggregates multi-repository metrics, 30-day activity, and health scores |
 
 ---
 
@@ -219,7 +232,7 @@ GitInsight AI includes a secure, end-to-end GitHub OAuth 2.0 flow:
 Create a `.env` file in the project root:
 
 ```env
-# GitHub Personal Access Token (for direct token testing)
+# GitHub Personal Access Token (for direct PAT testing & collaborator fallback)
 GITHUB_ACCESS_TOKEN=your_personal_access_token_here
 
 # GitHub OAuth App Configuration
@@ -272,8 +285,8 @@ Git-fyp-main/
 │   ├── routes/
 │   │   ├── __root.tsx            # Root HTML layout, QueryClient provider & error boundaries
 │   │   ├── index.tsx             # Landing page with GitHub OAuth login trigger
-│   │   ├── dashboard.tsx         # Main executive dashboard & metrics
-│   │   ├── repositories.tsx      # Live repository directory & filtering
+│   │   ├── dashboard.tsx         # Executive dashboard with live activity charts & metrics
+│   │   ├── repositories.tsx      # Repository directory with Owned vs Collaborated tabs
 │   │   ├── repositories.$id.tsx  # 8-tab repository deep-dive analytics
 │   │   ├── ai-insights.tsx       # AI digests, risk analysis & recommendations
 │   │   ├── voice.tsx             # AI Voice Assistant with soundwave UI
@@ -282,7 +295,8 @@ Git-fyp-main/
 │   │   └── settings.tsx          # System, AI model & notification settings
 │   ├── lib/
 │   │   ├── env.ts                # Zero-dependency .env loader for server & Vite runtimes
-│   │   ├── github-api.ts         # GitHub REST API client & repository transformer
+│   │   ├── github-api.ts         # Dual-affiliation repo fetcher (owned & collaborated)
+│   │   ├── dashboard-api.ts      # Multi-repository activity & health score aggregator
 │   │   ├── github-oauth.ts       # OAuth 2.0 login, callback, session & user profile handler
 │   │   ├── mock-data.ts          # Static sample dataset for offline fallbacks
 │   │   ├── error-capture.ts      # SSR error capture
