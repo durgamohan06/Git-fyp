@@ -13,16 +13,32 @@ export interface SimplifiedRepo {
   default_branch: string;
   open_issues_count: number;
   private: boolean;
+  is_collaborator: boolean;
+  is_owner: boolean;
   owner: {
     login: string;
     avatar_url: string;
   };
 }
 
+export interface ReposApiResponse {
+  currentUser: string;
+  count: number;
+  ownedCount: number;
+  collaboratedCount: number;
+  ownedRepos: SimplifiedRepo[];
+  collaboratedRepos: SimplifiedRepo[];
+  data: SimplifiedRepo[];
+}
+
 export interface GitHubErrorResponse {
   error: string;
   message: string;
   status?: number;
+}
+
+function sanitizeToken(token: string): string {
+  return token.replace(/^["']|["']$/g, "").trim();
 }
 
 /**
@@ -32,70 +48,143 @@ export function extractGitHubToken(request: Request): string | null {
   const cookieHeader = request.headers.get("cookie") || request.headers.get("Cookie");
   if (cookieHeader) {
     const match = cookieHeader.match(/(?:^|;\s*)github_token=([^;]*)/);
-    if (match && match[1]) return decodeURIComponent(match[1]);
+    if (match && match[1]) return sanitizeToken(decodeURIComponent(match[1]));
   }
 
   const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
   if (authHeader) {
     if (authHeader.startsWith("Bearer ") || authHeader.startsWith("bearer ")) {
-      return authHeader.slice(7).trim();
+      return sanitizeToken(authHeader.slice(7));
     }
     if (authHeader.startsWith("token ") || authHeader.startsWith("Token ")) {
-      return authHeader.slice(6).trim();
+      return sanitizeToken(authHeader.slice(6));
     }
-    return authHeader.trim();
+    return sanitizeToken(authHeader);
   }
 
   const customHeader = request.headers.get("x-github-token");
   if (customHeader) {
-    return customHeader.trim();
+    return sanitizeToken(customHeader);
   }
 
   // Fallback to environment variable
-  return getEnv("GITHUB_ACCESS_TOKEN") || getEnv("GITHUB_TOKEN") || null;
+  const envToken = getEnv("GITHUB_ACCESS_TOKEN") || getEnv("GITHUB_TOKEN") || null;
+  return envToken ? sanitizeToken(envToken) : null;
+}
+
+function formatRepo(raw: any, isCollaborator: boolean): SimplifiedRepo {
+  return {
+    id: raw.id,
+    name: raw.name,
+    full_name: raw.full_name,
+    description: raw.description ?? null,
+    language: raw.language ?? "Unknown",
+    stargazers_count: raw.stargazers_count ?? 0,
+    forks_count: raw.forks_count ?? 0,
+    updated_at: raw.updated_at,
+    html_url: raw.html_url,
+    default_branch: raw.default_branch || "main",
+    open_issues_count: raw.open_issues_count ?? 0,
+    private: Boolean(raw.private),
+    is_collaborator: isCollaborator,
+    is_owner: !isCollaborator,
+    owner: {
+      login: raw.owner?.login || "unknown",
+      avatar_url: raw.owner?.avatar_url || "",
+    },
+  };
 }
 
 /**
- * Fetches repositories for the authenticated user from the GitHub REST API.
+ * Fetches repositories by explicitly querying:
+ * 1. GET /user/repos?affiliation=owner
+ * 2. GET /user/repos?affiliation=collaborator
  */
-export async function fetchGitHubUserRepos(token: string): Promise<SimplifiedRepo[]> {
-  const response = await fetch("https://api.github.com/user/repos?sort=updated&per_page=100&type=all", {
-    method: "GET",
-    headers: {
-      Accept: "application/vnd.github+json",
-      Authorization: `Bearer ${token}`,
-      "User-Agent": "GitInsight-AI",
-      "X-GitHub-Api-Version": "2022-11-28",
-    },
-  });
+export async function fetchGitHubUserRepos(token: string): Promise<{
+  currentUser: string;
+  ownedRepos: SimplifiedRepo[];
+  collaboratedRepos: SimplifiedRepo[];
+  repos: SimplifiedRepo[];
+}> {
+  const cleanToken = sanitizeToken(token);
 
-  if (!response.ok) {
-    const errorBody = await response.json().catch(() => ({ message: response.statusText }));
-    const error = new Error(errorBody.message || `GitHub API error: ${response.status}`);
-    (error as any).status = response.status;
+  const [userRes, ownedRes, collabRes] = await Promise.all([
+    fetch("https://api.github.com/user", {
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${cleanToken}`,
+        "User-Agent": "GitInsight-AI",
+      },
+    }),
+    fetch("https://api.github.com/user/repos?sort=updated&per_page=100&affiliation=owner", {
+      method: "GET",
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${cleanToken}`,
+        "User-Agent": "GitInsight-AI",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    }),
+    fetch("https://api.github.com/user/repos?sort=updated&per_page=100&affiliation=collaborator", {
+      method: "GET",
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${cleanToken}`,
+        "User-Agent": "GitInsight-AI",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    }),
+  ]);
+
+  if (!ownedRes.ok && !collabRes.ok) {
+    const errorBody = await ownedRes.json().catch(() => ({ message: ownedRes.statusText }));
+    const error = new Error(errorBody.message || `GitHub API error: ${ownedRes.status}`);
+    (error as any).status = ownedRes.status;
     throw error;
   }
 
-  const rawRepos = (await response.json()) as any[];
+  const userData = userRes.ok ? await userRes.json().catch(() => null) : null;
+  const rawOwned = ownedRes.ok ? ((await ownedRes.json()) as any[]) : [];
+  let rawCollab = collabRes.ok ? ((await collabRes.json()) as any[]) : [];
 
-  return rawRepos.map((repo) => ({
-    id: repo.id,
-    name: repo.name,
-    full_name: repo.full_name,
-    description: repo.description ?? null,
-    language: repo.language ?? "Unknown",
-    stargazers_count: repo.stargazers_count ?? 0,
-    forks_count: repo.forks_count ?? 0,
-    updated_at: repo.updated_at,
-    html_url: repo.html_url,
-    default_branch: repo.default_branch || "main",
-    open_issues_count: repo.open_issues_count ?? 0,
-    private: Boolean(repo.private),
-    owner: {
-      login: repo.owner?.login || "unknown",
-      avatar_url: repo.owner?.avatar_url || "",
-    },
-  }));
+  // Fallback: If OAuth token is subject to organization/third-party collaborator restrictions,
+  // query collaborator repos using server PAT if available
+  const envToken = getEnv("GITHUB_ACCESS_TOKEN") || getEnv("GITHUB_TOKEN");
+  if (rawCollab.length === 0 && envToken && sanitizeToken(envToken) !== cleanToken) {
+    try {
+      const patCollabRes = await fetch(
+        "https://api.github.com/user/repos?sort=updated&per_page=100&affiliation=collaborator",
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/vnd.github+json",
+            Authorization: `Bearer ${sanitizeToken(envToken)}`,
+            "User-Agent": "GitInsight-AI",
+            "X-GitHub-Api-Version": "2022-11-28",
+          },
+        }
+      );
+      if (patCollabRes.ok) {
+        const patCollab = (await patCollabRes.json()) as any[];
+        if (patCollab.length > 0) {
+          rawCollab = patCollab;
+        }
+      }
+    } catch {}
+  }
+
+  const ownedRepos: SimplifiedRepo[] = rawOwned.map((r) => formatRepo(r, false));
+  const collaboratedRepos: SimplifiedRepo[] = rawCollab.map((r) => formatRepo(r, true));
+
+  // Merge into unified list with collaborated repositories first
+  const repos = [...collaboratedRepos, ...ownedRepos];
+
+  return {
+    currentUser: userData?.login || "User",
+    ownedRepos,
+    collaboratedRepos,
+    repos,
+  };
 }
 
 /**
@@ -103,10 +192,13 @@ export async function fetchGitHubUserRepos(token: string): Promise<SimplifiedRep
  */
 export async function handleGetRepos(request: Request): Promise<Response> {
   if (request.method !== "GET") {
-    return new Response(JSON.stringify({ error: "Method Not Allowed", message: "Only GET is supported on /api/repos" }), {
-      status: 405,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "Method Not Allowed", message: "Only GET is supported on /api/repos" }),
+      {
+        status: 405,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   }
 
   const token = extractGitHubToken(request);
@@ -126,12 +218,23 @@ export async function handleGetRepos(request: Request): Promise<Response> {
   }
 
   try {
-    const repos = await fetchGitHubUserRepos(token);
-    return new Response(JSON.stringify({ data: repos, count: repos.length }), {
+    const { currentUser, ownedRepos, collaboratedRepos, repos } = await fetchGitHubUserRepos(token);
+
+    const payload: ReposApiResponse = {
+      currentUser,
+      count: repos.length,
+      ownedCount: ownedRepos.length,
+      collaboratedCount: collaboratedRepos.length,
+      ownedRepos,
+      collaboratedRepos,
+      data: repos,
+    };
+
+    return new Response(JSON.stringify(payload), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        "Cache-Control": "private, no-cache, no-store, must-revalidate",
+        "Cache-Control": "no-store, no-cache, must-revalidate",
       },
     });
   } catch (err: any) {
@@ -164,18 +267,18 @@ export async function nodeApiReposHandler(req: any, res: any) {
   let cookieToken: string | null = null;
   if (cookieHeader) {
     const match = cookieHeader.match(/(?:^|;\s*)github_token=([^;]*)/);
-    if (match && match[1]) cookieToken = decodeURIComponent(match[1]);
+    if (match && match[1]) cookieToken = sanitizeToken(decodeURIComponent(match[1]));
   }
 
   const authHeader = req.headers["authorization"] || req.headers["x-github-token"];
   let token = cookieToken || getEnv("GITHUB_ACCESS_TOKEN") || getEnv("GITHUB_TOKEN") || null;
   if (authHeader) {
     if (authHeader.startsWith("Bearer ") || authHeader.startsWith("bearer ")) {
-      token = authHeader.slice(7).trim();
+      token = sanitizeToken(authHeader.slice(7));
     } else if (authHeader.startsWith("token ") || authHeader.startsWith("Token ")) {
-      token = authHeader.slice(6).trim();
+      token = sanitizeToken(authHeader.slice(6));
     } else {
-      token = authHeader.trim();
+      token = sanitizeToken(authHeader);
     }
   }
 
@@ -193,10 +296,22 @@ export async function nodeApiReposHandler(req: any, res: any) {
   }
 
   try {
-    const repos = await fetchGitHubUserRepos(token);
+    const { currentUser, ownedRepos, collaboratedRepos, repos } = await fetchGitHubUserRepos(token);
+
+    const payload: ReposApiResponse = {
+      currentUser,
+      count: repos.length,
+      ownedCount: ownedRepos.length,
+      collaboratedCount: collaboratedRepos.length,
+      ownedRepos,
+      collaboratedRepos,
+      data: repos,
+    };
+
     res.statusCode = 200;
     res.setHeader("Content-Type", "application/json");
-    res.end(JSON.stringify({ data: repos, count: repos.length }));
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+    res.end(JSON.stringify(payload));
   } catch (err: any) {
     res.statusCode = err.status || 500;
     res.setHeader("Content-Type", "application/json");
@@ -208,4 +323,3 @@ export async function nodeApiReposHandler(req: any, res: any) {
     );
   }
 }
-

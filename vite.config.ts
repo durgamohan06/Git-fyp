@@ -5,11 +5,19 @@ import tsConfigPaths from "vite-tsconfig-paths";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 
 import { nodeApiReposHandler } from "./src/lib/github-api";
+import { nodeDashboardHandler } from "./src/lib/dashboard-api";
+import { nodeRepoInsightsHandler } from "./src/lib/repo-insights";
 import { nodeAuthRouter } from "./src/lib/github-oauth";
 
 const apiDevPlugin: Plugin = {
   name: "api-dev-routes",
   configureServer(server) {
+    server.middlewares.use("/api/repos/insights", async (req, res) => {
+      await nodeRepoInsightsHandler(req, res);
+    });
+    server.middlewares.use("/api/dashboard", async (req, res) => {
+      await nodeDashboardHandler(req, res);
+    });
     server.middlewares.use("/api/repos", async (req, res) => {
       await nodeApiReposHandler(req, res);
     });

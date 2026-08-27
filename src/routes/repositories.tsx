@@ -2,14 +2,29 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { Card, Badge, Button } from "@/components/ui-bits";
-import { GitBranch, Star, GitFork, Search, Loader2, AlertCircle, RefreshCw, ExternalLink, Key } from "lucide-react";
-import type { SimplifiedRepo } from "@/lib/github-api";
+import type { SimplifiedRepo, ReposApiResponse } from "@/lib/github-api";
+import {
+  GitBranch,
+  Star,
+  GitFork,
+  ExternalLink,
+  Search,
+  RefreshCw,
+  AlertCircle,
+  Key,
+  Users,
+  UserCheck,
+  FolderGit2,
+} from "lucide-react";
 
 export const Route = createFileRoute("/repositories")({
   head: () => ({
     meta: [
       { title: "Repositories · GitInsight AI" },
-      { name: "description", content: "All connected GitHub repositories with health, commits, and status." },
+      {
+        name: "description",
+        content: "Explore owned and collaborated GitHub repositories with real-time stats.",
+      },
     ],
   }),
   component: Repositories,
@@ -33,11 +48,15 @@ function formatRelativeTime(dateString: string): string {
 }
 
 function Repositories() {
-  const [repos, setRepos] = useState<SimplifiedRepo[]>([]);
+  const [allRepos, setAllRepos] = useState<SimplifiedRepo[]>([]);
+  const [ownedRepos, setOwnedRepos] = useState<SimplifiedRepo[]>([]);
+  const [collaboratedRepos, setCollaboratedRepos] = useState<SimplifiedRepo[]>([]);
+  const [currentUser, setCurrentUser] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("All");
+  const [activeTab, setActiveTab] = useState<"all" | "owned" | "collaborated">("all");
   const [customToken, setCustomToken] = useState<string>("");
   const [showTokenInput, setShowTokenInput] = useState(false);
 
@@ -46,29 +65,32 @@ function Repositories() {
     setError(null);
 
     try {
-      const activeToken =
-        tokenOverride !== undefined
-          ? tokenOverride
-          : typeof window !== "undefined"
-            ? localStorage.getItem("github_token") || ""
-            : "";
-
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
       };
 
-      if (activeToken) {
-        headers["Authorization"] = `Bearer ${activeToken}`;
+      if (tokenOverride && tokenOverride.trim()) {
+        headers["Authorization"] = `Bearer ${tokenOverride.trim()}`;
       }
 
-      const res = await fetch("/api/repos", { headers });
-      const data = await res.json();
+      const res = await fetch(`/api/repos?_t=${Date.now()}`, {
+        headers,
+        credentials: "include",
+      });
+      const json: ReposApiResponse = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || data.error || `HTTP error ${res.status}`);
+        throw new Error((json as any).message || (json as any).error || `HTTP error ${res.status}`);
       }
 
-      setRepos(data.data || []);
+      const rawAll = json.data || [];
+      const rawOwned = json.ownedRepos || rawAll.filter((r) => r.is_owner);
+      const rawCollab = json.collaboratedRepos || rawAll.filter((r) => r.is_collaborator);
+
+      setAllRepos(rawAll);
+      setOwnedRepos(rawOwned);
+      setCollaboratedRepos(rawCollab);
+      if (json.currentUser) setCurrentUser(json.currentUser);
     } catch (err: any) {
       setError(err.message || "Failed to load repositories from GitHub API.");
     } finally {
@@ -77,9 +99,7 @@ function Repositories() {
   };
 
   useEffect(() => {
-    const savedToken = typeof window !== "undefined" ? localStorage.getItem("github_token") || "" : "";
-    setCustomToken(savedToken);
-    fetchRepositories(savedToken);
+    fetchRepositories();
   }, []);
 
   const handleSaveToken = (e: React.FormEvent) => {
@@ -95,17 +115,22 @@ function Repositories() {
     fetchRepositories(customToken.trim());
   };
 
+  const currentTabList =
+    activeTab === "owned" ? ownedRepos : activeTab === "collaborated" ? collaboratedRepos : allRepos;
+
   // Extract unique languages for filter dropdown
   const languages: string[] = [
     "All",
-    ...Array.from(new Set(repos.map((r) => r.language).filter((l): l is string => Boolean(l)))),
+    ...Array.from(new Set(allRepos.map((r) => r.language).filter((l): l is string => Boolean(l)))),
   ];
 
-  // Filtered repositories based on search and language
-  const filteredRepos = repos.filter((r) => {
+  // Filtered repositories based on tab, search, and language
+  const filteredRepos = currentTabList.filter((r) => {
     const matchesSearch =
       r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (r.owner?.login && r.owner.login.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (r.description && r.description.toLowerCase().includes(searchTerm.toLowerCase()));
+
     const matchesLanguage = selectedLanguage === "All" || r.language === selectedLanguage;
     return matchesSearch && matchesLanguage;
   });
@@ -114,7 +139,11 @@ function Repositories() {
     <AppShell>
       <PageHeader
         title="Repositories"
-        subtitle="All GitHub repositories connected to GitInsight AI via GitHub REST API."
+        subtitle={
+          currentUser
+            ? `Connected as @${currentUser} via GitHub REST API (${allRepos.length} repositories tracked)`
+            : "All GitHub repositories connected to GitInsight AI via GitHub REST API."
+        }
         actions={
           <div className="flex gap-2">
             <Button variant="secondary" onClick={() => setShowTokenInput((v) => !v)}>
@@ -144,39 +173,105 @@ function Repositories() {
                 className="flex-1 h-10 px-3 rounded-lg bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-brand/40"
               />
               <Button type="submit">Save & Connect</Button>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  if (typeof window !== "undefined") localStorage.removeItem("github_token");
+                  setCustomToken("");
+                  setShowTokenInput(false);
+                  fetchRepositories("");
+                }}
+              >
+                Reset to OAuth
+              </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              You can either enter a token here or set <code className="bg-muted px-1.5 py-0.5 rounded">GITHUB_ACCESS_TOKEN</code> in your server's <code className="bg-muted px-1.5 py-0.5 rounded">.env</code> file.
+              You can enter a specific GitHub Personal Access Token or click <strong>Reset to OAuth</strong> to use your active OAuth session.
             </p>
           </form>
         </Card>
       )}
 
-      {/* Filters */}
-      <Card className="p-4 mb-6" lift={false}>
-        <div className="flex flex-wrap gap-3 items-center">
-          <div className="relative flex-1 min-w-[220px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Filter repositories by name or description…"
-              className="w-full h-10 pl-9 pr-3 rounded-lg bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-brand/40"
-            />
-          </div>
-          <select
-            value={selectedLanguage}
-            onChange={(e) => setSelectedLanguage(e.target.value)}
-            className="h-10 px-3 rounded-lg bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-brand/40"
+      {/* Tabs & Filters */}
+      <div className="space-y-4 mb-6">
+        {/* Segmented Affiliation Tabs */}
+        <div className="flex flex-wrap items-center gap-2 p-1.5 bg-card/60 border border-border/80 rounded-2xl w-fit">
+          <button
+            type="button"
+            onClick={() => setActiveTab("all")}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 ${
+              activeTab === "all"
+                ? "bg-brand text-brand-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent/40"
+            }`}
           >
-            {languages.map((lang) => (
-              <option key={lang} value={lang}>
-                {lang === "All" ? "All languages" : lang}
-              </option>
-            ))}
-          </select>
+            <FolderGit2 className="h-3.5 w-3.5" />
+            All Repositories
+            <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeTab === "all" ? "bg-black/20 text-white" : "bg-muted text-muted-foreground"}`}>
+              {allRepos.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("owned")}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 ${
+              activeTab === "owned"
+                ? "bg-brand text-brand-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent/40"
+            }`}
+          >
+            <UserCheck className="h-3.5 w-3.5" />
+            My Owned Repos
+            <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeTab === "owned" ? "bg-black/20 text-white" : "bg-muted text-muted-foreground"}`}>
+              {ownedRepos.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("collaborated")}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 ${
+              activeTab === "collaborated"
+                ? "bg-brand text-brand-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent/40"
+            }`}
+          >
+            <Users className="h-3.5 w-3.5" />
+            Collaborated Repos
+            <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeTab === "collaborated" ? "bg-black/20 text-white" : "bg-muted text-muted-foreground"}`}>
+              {collaboratedRepos.length}
+            </span>
+          </button>
         </div>
-      </Card>
+
+        {/* Search & Language Filter Bar */}
+        <Card className="p-4" lift={false}>
+          <div className="flex flex-wrap gap-3 items-center">
+            <div className="relative flex-1 min-w-[220px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Filter repositories by name, owner, or description…"
+                className="w-full h-10 pl-9 pr-3 rounded-lg bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-brand/40"
+              />
+            </div>
+            <select
+              value={selectedLanguage}
+              onChange={(e) => setSelectedLanguage(e.target.value)}
+              className="h-10 px-3 rounded-lg bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-brand/40"
+            >
+              {languages.map((lang) => (
+                <option key={lang} value={lang}>
+                  {lang === "All" ? "All languages" : lang}
+                </option>
+              ))}
+            </select>
+          </div>
+        </Card>
+      </div>
 
       {/* Loading State */}
       {loading && (
@@ -218,43 +313,63 @@ function Repositories() {
         </Card>
       )}
 
-      {/* Success State */}
+      {/* Empty State */}
       {!loading && !error && filteredRepos.length === 0 && (
         <Card className="p-12 text-center" lift={false}>
           <div className="h-12 w-12 rounded-2xl bg-muted text-muted-foreground mx-auto grid place-items-center mb-3">
             <GitBranch className="h-6 w-6" />
           </div>
-          <h3 className="font-semibold text-lg">No repositories found</h3>
+          <h3 className="font-semibold text-lg">No repositories found in this tab</h3>
           <p className="text-sm text-muted-foreground mt-1">
             {searchTerm || selectedLanguage !== "All"
-              ? "Try adjusting your search or language filters."
-              : "No repositories were returned for this account."}
+              ? "Try adjusting your search or language filter."
+              : `No repositories found under "${activeTab}".`}
           </p>
         </Card>
       )}
 
+      {/* Repository Cards Grid */}
       {!loading && !error && filteredRepos.length > 0 && (
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {filteredRepos.map((r) => (
-            <Card key={r.id} className="p-5 h-full flex flex-col justify-between">
+            <Card key={r.id} className="p-5 h-full flex flex-col justify-between hover:border-brand/50 transition">
               <div>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="text-xs text-muted-foreground truncate">{r.owner?.login || "User"}</div>
-                    <a
-                      href={r.html_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-semibold truncate text-foreground hover:text-brand transition inline-flex items-center gap-1 group"
-                    >
-                      <span className="truncate">{r.name}</span>
-                      <ExternalLink className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition shrink-0" />
-                    </a>
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    {r.owner?.avatar_url && (
+                      <img
+                        src={r.owner.avatar_url}
+                        alt={r.owner.login}
+                        className="h-6 w-6 rounded-full ring-1 ring-border shrink-0"
+                      />
+                    )}
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-medium text-muted-foreground truncate">
+                        {r.owner?.login || "User"}
+                      </div>
+                      <a
+                        href={r.html_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold text-base truncate text-foreground hover:text-brand transition inline-flex items-center gap-1 group"
+                      >
+                        <span className="truncate">{r.name}</span>
+                        <ExternalLink className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition shrink-0" />
+                      </a>
+                    </div>
                   </div>
-                  <Badge tone={r.private ? "warning" : "success"}>{r.private ? "Private" : "Public"}</Badge>
+
+                  <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                    {r.is_collaborator && (
+                      <Badge tone="brand" className="text-[10px]">
+                        Collaborator
+                      </Badge>
+                    )}
+                    <Badge tone={r.private ? "warning" : "success"}>{r.private ? "Private" : "Public"}</Badge>
+                  </div>
                 </div>
 
-                <p className="mt-2.5 text-xs text-muted-foreground line-clamp-2 min-h-[32px]">
+                <p className="mt-2 text-xs text-muted-foreground line-clamp-2 min-h-[32px]">
                   {r.description || "No description provided."}
                 </p>
               </div>
@@ -279,7 +394,9 @@ function Repositories() {
                 </div>
 
                 <div className="mt-3 flex items-center justify-between">
-                  <span className="text-[11px] text-muted-foreground">Branch: <code className="text-foreground font-medium">{r.default_branch}</code></span>
+                  <span className="text-[11px] text-muted-foreground">
+                    Branch: <code className="text-foreground font-medium">{r.default_branch}</code>
+                  </span>
                   <Link
                     to="/repositories/$id"
                     params={{ id: r.name }}

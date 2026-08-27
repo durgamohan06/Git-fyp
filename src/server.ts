@@ -4,6 +4,8 @@ import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 
 import { handleGetRepos } from "./lib/github-api";
+import { handleGetDashboard } from "./lib/dashboard-api";
+import { handleGetRepoInsights } from "./lib/repo-insights";
 import {
   handleGitHubLogin,
   handleGitHubCallback,
@@ -57,6 +59,12 @@ export default {
     try {
       const url = new URL(request.url);
 
+      if (url.pathname === "/api/repos/insights") {
+        return await handleGetRepoInsights(request);
+      }
+      if (url.pathname === "/api/dashboard") {
+        return await handleGetDashboard(request);
+      }
       if (url.pathname === "/api/repos") {
         return await handleGetRepos(request);
       }
